@@ -5,14 +5,10 @@
 #include "utils.h"
 #include "errors.h"
 #include "return_codes.h"
+#include "defines.h"
+#include "loop.h"
 
-#define ARGS_UDP_IP 		1
-#define ARGS_TCP_IP 		2
-#define ARGS_LOG_PATH 		3
-#define ARGS_PREFIX 		4
-#define ARGS_EXPECTED_ARGC	5
-
-int validate_argv(int argc, char *argv[])
+ret_code validate_argv(int argc, char *argv[])
 {
 	if (argc != ARGS_EXPECTED_ARGC) {
 		log_add("Invalid number of arguments: %d. Expected: %d", argc - 1, ARGS_EXPECTED_ARGC - 1);
@@ -44,11 +40,11 @@ int validate_argv(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
-	int ret = validate_argv(argc, argv); 
+	ret_code ret = validate_argv(argc, argv); 
 
 	if (ret == RET_OK) {
-
+		ret = loop_init(argv);
 	}
 
-	return ret;
+	return (int)ret;
 }

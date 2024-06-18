@@ -1,8 +1,24 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <time.h>
+#include <stdbool.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 #include "log.h"
+
+ret_code log_init_file(char *path)
+{
+	int fd = open(path, O_RDWR | O_APPEND | O_CREAT);
+
+	if (fd != -1) {
+		if (dup2(fd, STDOUT_FILENO) != -1)
+			return RET_OK;
+	}
+
+	return RET_ERROR;
+}
+
 // TODO: add component 
 void log_add(char *format, ...)
 {

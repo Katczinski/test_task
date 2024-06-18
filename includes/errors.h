@@ -6,4 +6,5 @@
 void    set_errno(int val);
 int     get_errno();
 char*   get_errno_str();
+
 #endif

@@ -7,14 +7,17 @@ CFLAGS = -Wall -Wextra -Werror
 SRCS = 		main.c\
     		src/errors.c\
 			src/log.c\
-			src/utils.c
+			src/utils.c\
+			src/loop.c
  
 OBJS = 		$(SRCS:.c=.o)
 
 HEADERS = 	includes/errors.h\
 			includes/log.h\
 			includes/utils.h\
-			includes/return_codes.h
+			includes/loop.h\
+			includes/return_codes.h\
+			includes/defines.h
 
 INCLUDES = 	-Iincludes
 

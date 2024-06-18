@@ -1,9 +1,9 @@
 #ifndef RETURN_CODES_H
 #define RETURN_CODES_H
 
-enum {
+typedef enum ret_code_e{
 	RET_OK = 0,
 	RET_ERROR,
-};
+} ret_code;
 
 #endif
