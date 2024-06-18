@@ -15,7 +15,7 @@
 int validate_argv(int argc, char *argv[])
 {
 	if (argc != ARGS_EXPECTED_ARGC) {
-		log_add("Incorrect number of arguments: %d. Expected: %d", argc - 1, ARGS_EXPECTED_ARGC - 1);
+		log_add("Invalid number of arguments: %d. Expected: %d", argc - 1, ARGS_EXPECTED_ARGC - 1);
 		return RET_ERROR;
 	}
 
