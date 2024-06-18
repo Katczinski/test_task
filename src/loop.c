@@ -1,12 +1,22 @@
 #include "loop.h"
 #include "log.h"
+#include "utils.h"
 #include "defines.h"
 #include "errors.h"
 
-#include<sys/socket.h>
-#include<arpa/inet.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <sys/epoll.h>
+#include <string.h>
+#include <stdio.h>
+#include <unistd.h>
+
+static int                  epfd = 0;
+static struct epoll_event   events[MAX_EVENT_NUM] = { 0 };
+static char                 comm_buff[TX_BUFF_SIZE] = { 0 };
 
 ret_code loop_init_udp_socket(char *str);
+ret_code loop_init_buffer(char *str);
 
 ret_code loop_init(char *argv[])
 {
@@ -16,72 +26,62 @@ ret_code loop_init(char *argv[])
     }
 
     if (loop_init_udp_socket(argv[ARGS_UDP_IP]) != RET_OK) {
-        log_add("Failed to create UDP socket '%s': %s", argv[ARGS_UDP_IP], get_errno_str());
+        log_add("Failed to create UDP socket '%s'", argv[ARGS_UDP_IP]);
         return RET_ERROR;
     }
-    log_add("loop init success");
+
+    if (loop_init_buffer(argv[ARGS_PREFIX]) != RET_OK) {
+        log_add("Failed to prepare communication buffer");
+        return RET_ERROR;
+    }
+
+    log_add("DEBUG: loop init success"); // TODO: change
     return RET_OK;
 }
 
-#include <sys/epoll.h>
-#include <string.h>
-#include <stdlib.h>
-#include <fcntl.h>
+ret_code loop_init_buffer(char *str)
+{
+    if (str == NULL || strlen(str) != PREFIX_SIZE)
+        return RET_ERROR;
 
-static int epfd;
-struct epoll_event *events;
-struct epoll_event ep;
-#define MAX_EVENT_NUM 10
+    memcpy(comm_buff, str, PREFIX_SIZE);
+
+    return RET_OK;
+}
 
 ret_code loop_init_udp_socket(char *str)
 {
     int listen_sock = 0;
     struct sockaddr_in server;
 
-    (void)str;
-
     if ((listen_sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
-        log_add("socket failed");
+        log_add("Failed to create socket: %s", get_errno_str());
 		return RET_ERROR;
 	}
 
-    int flags;
-    if((flags = fcntl(listen_sock, F_GETFD, 0)) < 0)
-    {
-        log_add("get falg error");
-        return RET_ERROR;
-    }
-
-    flags |= O_NONBLOCK;
-    if (fcntl(listen_sock, F_SETFL, flags) < 0) {
-        log_add("set nonblock fail");
-        return -1;
-    }
-
 	server.sin_family = AF_INET;
-	server.sin_addr.s_addr = INADDR_ANY;
-	server.sin_port = htons(6000);
+    extract_ip_port(str, &server.sin_addr.s_addr, &server.sin_port);
 
     if (bind(listen_sock, (struct sockaddr *) &server, sizeof(server)) < 0) {
-        log_add("bind failed");
+        log_add("Failed to bind address to socket: %s", get_errno_str());
         return RET_ERROR;
     }
 
-    
-    events = malloc(sizeof(*events) * MAX_EVENT_NUM);
     epfd = epoll_create(MAX_EVENT_NUM);
     if (epfd < 0) {
-        log_add("epoll_create failed");
+        log_add("Failed to open an epoll descriptor: %s", get_errno_str());
         return RET_ERROR;
     }
-    memset(&ep, 0, sizeof(ep));
 
-    ep.events = EPOLLIN;
+    struct epoll_event ep;
+    memset(&ep, 0, sizeof(ep));
+    ep.events = EPOLLIN;            // TODO: explore all the events and may be add some
     ep.data.fd = listen_sock;
 
     if (epoll_ctl(epfd, EPOLL_CTL_ADD, ep.data.fd, &ep) < 0)
     {
-        log_add("epoll_ctl failed");
+        log_add("Failed to add target descriptor to the epoll descriptor: %s", get_errno_str());
+        close(epfd);
         return RET_ERROR;
     }
 
@@ -90,22 +90,29 @@ ret_code loop_init_udp_socket(char *str)
 
 ret_code loop_run()
 {
-    // struct epoll_event ep;
-    int nfds;
-    // char buff[1024];
+    int event_count = 0;
+    int client_fd = 0;
     while (1) {
-        // log_add("polling...");
-        nfds = epoll_wait(epfd, events, MAX_EVENT_NUM, 500);
-        log_add("nfds: %d", nfds);
-        for (int i = 0; i < nfds; ++i) {
-           if (events[i].data.fd < 0)
+        event_count = epoll_wait(epfd, events, MAX_EVENT_NUM, 0);
+        for (int i = 0; i < event_count; ++i) {
+            client_fd = events[i].data.fd;
+           if (client_fd < 0)
                 continue;
-            // int sock = events[i].data.fd;
-            // read(sock, buff, 1023);
-            log_add("event: %d", events[i].events);
-        }
-                
-    }
+            // TODO: events[i].events is probably a bitmask, so there may be several events at once. Handle this
+            struct sockaddr_in clientaddr;
+            socklen_t clilen = sizeof(struct sockaddr);
 
+            int len = recvfrom(client_fd, comm_buff + PREFIX_SIZE, RX_BUFF_SIZE, 0, (struct sockaddr*)&clientaddr, &clilen); // MSG_DONTWAIT  ??
+            if (len > 0) {
+                comm_buff[PREFIX_SIZE + len] = '\0';
+                log_add("event: %d: %s", events[i].events, comm_buff);
+            } else if (len < 0) {
+                log_add("Erorr occured during reading from udp client: %s", get_errno_str());
+            }
+        }
+        // TODO: Install sigint handler
+        // log_add("Ain't no waiting for shit, log goes brrrr");
+    }
+    close(epfd);
     return RET_ERROR;
 }

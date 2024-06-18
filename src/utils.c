@@ -6,6 +6,7 @@
 
 #include "utils.h"
 #include "errors.h"
+#include "defines.h"
 
 bool is_valid_ip(char *str)
 {
@@ -14,7 +15,7 @@ bool is_valid_ip(char *str)
 		return false;
 	}
 
-	char *temp_str = calloc(strlen(str) + 1, sizeof(char));
+	char *temp_str = (char*)calloc(strlen(str) + 1, sizeof(char));
 	strcpy(temp_str, str);
 
 	char *ip_str = strtok(temp_str, ":");
@@ -74,5 +75,40 @@ bool is_valid_prefix(char *str)
 		return false;
 	}
 
-	return strlen(str) == 4;
+	return strlen(str) == PREFIX_SIZE;
+}
+
+bool extract_ip_port(char *str, unsigned int *ip, short unsigned int *port)
+{
+	if (str == NULL || ip == NULL || port == NULL)
+	{
+		set_errno(EINVAL);
+		return false;
+	}
+
+	char *temp_str = (char*)calloc(strlen(str) + 1, sizeof(char));
+    strcpy(temp_str, str);
+
+    char *ip_str = strtok(temp_str, ":");
+    char *port_str = strtok(NULL, ":");
+
+    char *endptr;
+	long temp_port = strtol(port_str, &endptr, 10);
+	if (endptr == port_str || *endptr != '\0' || temp_port <= 0 || temp_port > 65535)
+	{
+        free(temp_str);
+		set_errno(EFAULT);
+		return false;
+	}
+
+	if (inet_pton(AF_INET, ip_str, ip) != 1)
+	{
+		free(temp_str);
+		set_errno(EFAULT);
+		return false;
+	}
+    *port = htons(temp_port);
+
+    free(temp_str);
+    return true;
 }
