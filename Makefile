@@ -13,7 +13,8 @@ OBJS = 		$(SRCS:.c=.o)
 
 HEADERS = 	includes/errors.h\
 			includes/log.h\
-			includes/utils.h
+			includes/utils.h\
+			includes/return_codes.h
 
 INCLUDES = 	-Iincludes
 

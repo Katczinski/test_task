@@ -16,8 +16,7 @@ void log_add(char *format, ...)
 	if (format != NULL)
 		va_start(arg_list, format);
 
-	if (ret)
-	{
+	if (ret) {
 		printf("%s: ", time_string);
 		vprintf(format, arg_list);
 		printf("\n");
