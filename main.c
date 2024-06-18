@@ -44,6 +44,7 @@ int main(int argc, char *argv[])
 
 	if (ret == RET_OK) {
 		ret = loop_init(argv);
+		loop_run();
 	}
 
 	return (int)ret;

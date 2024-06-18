@@ -12,8 +12,9 @@ ret_code log_init_file(char *path)
 	int fd = open(path, O_RDWR | O_APPEND | O_CREAT);
 
 	if (fd != -1) {
-		if (dup2(fd, STDOUT_FILENO) != -1)
+		// if (dup2(fd, STDOUT_FILENO) != -1)
 			return RET_OK;
+		close(fd);
 	}
 
 	return RET_ERROR;
