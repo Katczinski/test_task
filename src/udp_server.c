@@ -25,11 +25,13 @@ ret_code udp_server_init(char *ip_str, uint8_t *buff, size_t buff_size) // TODO:
     struct sockaddr_in server;
     struct epoll_event ep;
 
-    if ((listen_sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
+    if ((listen_sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+    {
         log_add("Failed to create socket: %s", get_errno_str());
 		return RET_ERROR;
 	}
-
+    
+    memset(&server, 0, sizeof(server));
 	server.sin_family = AF_INET;
     if (!extract_ip_port(ip_str, &server.sin_addr.s_addr, &server.sin_port))
     {
@@ -37,13 +39,15 @@ ret_code udp_server_init(char *ip_str, uint8_t *buff, size_t buff_size) // TODO:
         return RET_ERROR;
     }
 
-    if (bind(listen_sock, (struct sockaddr *) &server, sizeof(server)) < 0) {
+    if (bind(listen_sock, (struct sockaddr *) &server, sizeof(server)) < 0)
+    {
         log_add("Failed to bind address to socket: %s", get_errno_str());
         return RET_ERROR;
     }
 
     epfd = epoll_create(MAX_EVENT_NUM);
-    if (epfd < 0) {
+    if (epfd < 0)
+    {
         log_add("Failed to open an epoll descriptor: %s", get_errno_str());
         return RET_ERROR;
     }
@@ -81,8 +85,8 @@ ret_code udp_server_default_handler(int sock, struct sockaddr_in* from, uint8_t 
     char ip[INET_ADDRSTRLEN];
     uint16_t port;
 
-    inet_ntop (AF_INET, &from->sin_addr, ip, sizeof (ip));
-    port = htons (from->sin_port);
+    inet_ntop(AF_INET, &from->sin_addr, ip, sizeof(ip));
+    port = htons(from->sin_port);
 
     log_add("Unhandled message from '%s:%d': %s", ip, port, buff);
 

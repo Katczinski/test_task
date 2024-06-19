@@ -1,6 +1,8 @@
 TARGET = target
 
-TEST = test
+TEST_UDP = test_udp
+
+TEST_TCP = test_tcp
 
 CC = gcc
 
@@ -46,13 +48,16 @@ TEST_LIBS = 		-lpthread
 $(TARGET): $(TARGET_SRCS) $(TARGET_HEADERS)
 	$(CC) $(CFLAGS) $(TARGET_INCLUDES) $(TARGET_SRCS) -o $(TARGET)
 
-$(TEST): $(TEST_SRCS) $(TEST_HEADERS)
-	$(CC) $(CFLAGS) $(TEST_INCLUDES) $(TEST_SRCS) -o $(TEST) $(TEST_LIBS)
+$(TEST_UDP): $(TEST_SRCS) $(TEST_HEADERS)
+	$(CC) $(CFLAGS) -DUDP $(TEST_INCLUDES) $(TEST_SRCS) -o $(TEST_UDP) $(TEST_LIBS)
+
+$(TEST_TCP): $(TEST_SRCS) $(TEST_HEADERS)
+	$(CC) $(CFLAGS) -DTCP $(TEST_INCLUDES) $(TEST_SRCS) -o $(TEST_TCP) $(TEST_LIBS)
 
 # %.o: %.c
 # 	$(CC) -g $(CFLAGS) -c $< -o $@
 
-all: $(TARGET) $(TEST)
+all: $(TARGET) $(TEST_UDP) $(TEST_TCP)
 
 # debug: CFLAGS += -fsanitize=address # causes valgrind error: "error calling PR_SET_PTRACER, vgdb might block"
 debug: CFLAGS += -g -DDEBUG
@@ -64,7 +69,8 @@ clean:
 
 fclean: clean
 	rm -rf $(TARGET)
-	rm -rf $(TEST)
+	rm -rf $(TEST_TCP)
+	rm -rf $(TEST_UDP)
 
 re: fclean all
 

@@ -4,16 +4,19 @@
 #include "defines.h"
 #include "errors.h"
 #include "udp_server.h"
+#include "tcp_client.h"
 
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <signal.h>
 #include <ctype.h>
+#include <arpa/inet.h>
 
 static uint8_t  comm_buff[TX_BUFF_SIZE] = { 0 };
 static bool     loop_keep_running = true;   
 
+ret_code loop_tcp_client_init(char *ip_str);
 ret_code loop_udp_server_init(char *ip_str);
 ret_code loop_init_buffer(char *prefix);
 
@@ -34,6 +37,11 @@ ret_code loop_init(char *argv[])
         return RET_ERROR;
     }
 
+    if (loop_tcp_client_init(argv[ARGS_TCP_IP]) != RET_OK) {
+        log_add("Failed to create TCP socket '%s'", argv[ARGS_TCP_IP]);
+        return RET_ERROR;
+    }
+
     log_add("DEBUG: loop init success"); // TODO: change
     return RET_OK;
 }
@@ -48,9 +56,40 @@ ret_code loop_init_buffer(char *prefix)
     return RET_OK;
 }
 
+ret_code loop_udp_message_handler(int sock, struct sockaddr_in* from, uint8_t *buff, size_t buff_len)
+{
+    (void)sock;
+
+    char ip[INET_ADDRSTRLEN];
+    uint16_t port;
+
+    inet_ntop(AF_INET, &from->sin_addr, ip, sizeof(ip));
+    port = htons(from->sin_port);
+
+    log_add("Got message from '%s:%d': %s", ip, port, buff);
+    if (tcp_client_send_buff(buff_len + PREFIX_SIZE) != RET_OK)
+    {
+        log_add("Tcp client returned error: %s", get_errno_str());
+        tcp_client_reconnect();
+        return RET_ERROR;
+    }
+    return RET_OK;
+}
+
+ret_code loop_tcp_client_init(char *ip_str)
+{
+    return tcp_client_init(ip_str, comm_buff, TX_BUFF_SIZE);
+}
+
 ret_code loop_udp_server_init(char *ip_str)
 {
-    return udp_server_init(ip_str, comm_buff + PREFIX_SIZE, RX_BUFF_SIZE);
+    if (udp_server_init(ip_str, comm_buff + PREFIX_SIZE, RX_BUFF_SIZE) != RET_OK)
+        return RET_ERROR;
+
+    if (udp_server_install_handler(&loop_udp_message_handler) != RET_OK)
+        return RET_ERROR;
+        
+    return RET_OK;
 }
 
 void loop_sigint_handler(int sig)
@@ -63,7 +102,7 @@ void loop_sigint_handler(int sig)
 ret_code loop_run()
 {
     signal(SIGINT, loop_sigint_handler);
-
+    log_add("starting udp server %d", loop_keep_running);
     while (loop_keep_running) {
         udp_server_iterate(0);
     }
