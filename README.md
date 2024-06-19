@@ -1,8 +1,8 @@
-##About
+## About
 This is my take on the interview test task.
 The program is supposed to listen to all incoming UDP messages, append a specified prefix to each of them and redirect the result to the specified TCP server while maintaining constant connection (when possible) to the said server, reconnecting if needed, and logging all the events it deems important to the specified log file.
 
-##Build
+## Build
 The build targets are following:
 - target      (Default make target) The program itself
 - test_udp    The test program to act as a UDP client to the specified server (main program)
@@ -12,12 +12,12 @@ The build targets are following:
 
 Debug mode is designed to redirect all the program output to stdout instead of the log file, while performing all the validity checks on the input parameters
 
-## Build
+### Example
 ``` shell
 make all
 ```
 
-##Usage
+## Usage
 The main program requires 4 arguments, which are:
 - UDP ip:port to listen to
 - TCP ip:port to redirect to
@@ -33,7 +33,7 @@ Any of the test programs:
 ./test_tcp 127.0.0.1:7000
 ```
 
-##Requirements
+## Requirements
 - All ip addresses MUST follow the format 'ddd.ddd.ddd.ddd:xxxxx'
 - Prefix MUST be a 4-characters long string
 - OS Linux
