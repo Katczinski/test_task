@@ -30,7 +30,7 @@ ret_code udp_server_init(char *ip_str, uint8_t *buff, size_t buff_size) // TODO:
         log_add("Failed to create socket: %s", get_errno_str());
 		return RET_ERROR;
 	}
-    
+
     memset(&server, 0, sizeof(server));
 	server.sin_family = AF_INET;
     if (!extract_ip_port(ip_str, &server.sin_addr.s_addr, &server.sin_port))
@@ -67,6 +67,7 @@ ret_code udp_server_init(char *ip_str, uint8_t *buff, size_t buff_size) // TODO:
     udp_server.buff = buff;
     udp_server.buff_size = buff_size;
 
+    log_add("UDP server started on %s", ip_str);
     return RET_OK;
 }
 

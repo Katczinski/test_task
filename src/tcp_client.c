@@ -78,12 +78,29 @@ ret_code tcp_client_reconnect()
     return RET_OK;
 }
 
+ret_code tcp_client_shutdown()
+{
+    close(tcp_client.sock);
+    log_add("TCP client shutdown");
+    return RET_OK;
+}
+
 void tcp_client_check_connection()
 {
+    // NOT IMPLEMENTED YET
+}
+
+ret_code tcp_client_iterate()
+{
+    // check if connected
+    // do something else
+    return RET_OK;
 }
 
 ret_code tcp_client_send_buff(size_t len)
 {
+    // TODO:    Investigate
+    // Issue:   Send returns success for some time after the pipe has been closed from another side
     if ((size_t)send(tcp_client.sock, tcp_client.buff, len, MSG_NOSIGNAL) == len)
         return RET_OK;
     return RET_ERROR;

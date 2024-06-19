@@ -8,5 +8,7 @@
 ret_code tcp_client_init(char *ip_str, uint8_t *buff, size_t buff_size);
 ret_code tcp_client_send_buff(size_t len);
 ret_code tcp_client_reconnect();
+ret_code tcp_client_shutdown();
+ret_code tcp_client_iterate();
 
 #endif

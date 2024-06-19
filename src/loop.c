@@ -42,7 +42,7 @@ ret_code loop_init(char *argv[])
         return RET_ERROR;
     }
 
-    log_add("DEBUG: loop init success"); // TODO: change
+    log_add("System init successfull");
     return RET_OK;
 }
 
@@ -88,7 +88,7 @@ ret_code loop_udp_server_init(char *ip_str)
 
     if (udp_server_install_handler(&loop_udp_message_handler) != RET_OK)
         return RET_ERROR;
-        
+
     return RET_OK;
 }
 
@@ -102,11 +102,12 @@ void loop_sigint_handler(int sig)
 ret_code loop_run()
 {
     signal(SIGINT, loop_sigint_handler);
-    log_add("starting udp server %d", loop_keep_running);
     while (loop_keep_running) {
+        tcp_client_iterate();
         udp_server_iterate(0);
     }
 
     udp_server_shutdown();
+    tcp_client_shutdown();
     return RET_ERROR;
 }
