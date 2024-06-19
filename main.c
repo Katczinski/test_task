@@ -44,8 +44,11 @@ int main(int argc, char *argv[])
 
 	if (ret == RET_OK) {
 		ret = loop_init(argv);
+		
 		if (ret == RET_OK)
 			ret = loop_run();
+		else
+			log_add("Start denied");
 	}
 
 	return (int)ret;

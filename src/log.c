@@ -31,8 +31,8 @@ void log_add(char *format, ...)
 
 	time_t t = time(NULL);
 	struct tm tm = *localtime(&t);
-	char time_string[10];
-	size_t ret = strftime(time_string, sizeof(time_string), "%T", &tm);
+	char time_string[20];
+	size_t ret = strftime(time_string, sizeof(time_string), "%d.%m.%Y %T", &tm);
 	
 	if (format != NULL)
 		va_start(arg_list, format);
@@ -41,6 +41,8 @@ void log_add(char *format, ...)
 		printf("%s: ", time_string);
 		vprintf(format, arg_list);
 		printf("\n");
+	} else {
+		printf("strftime returned %lu\n", ret);
 	}
 
 	if (format != NULL)

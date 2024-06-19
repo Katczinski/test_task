@@ -5,4 +5,5 @@
 
 ret_code loop_init(char *argv[]);
 ret_code loop_run();
+
 #endif

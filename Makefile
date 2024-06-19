@@ -10,7 +10,9 @@ TARGET_SRCS = 		main.c\
     				src/errors.c\
 					src/log.c\
 					src/utils.c\
-					src/loop.c
+					src/loop.c\
+					src/udp_server.c\
+					src/tcp_client.c
  
 TARGET_OBJS = 		$(TARGET_SRCS:.c=.o)
 
@@ -19,25 +21,33 @@ TARGET_HEADERS =	includes/errors.h\
 					includes/utils.h\
 					includes/loop.h\
 					includes/return_codes.h\
-					includes/defines.h
+					includes/defines.h\
+					includes/udp_server.h\
+					includes/tcp_client.h
 
 TARGET_INCLUDES = 	-Iincludes
 
-TEST_SRCS = 		test_main.c
+
+TEST_SRCS = 		test_main.c\
+					src/utils.c\
+					src/errors.c
 
 TEST_OBJS =			$(TEST_SRCS:.c=.o)
 
-TEST_HEADERS =
+TEST_HEADERS =		includes/utils.h\
+					includes/errors.h\
+					includes/defines.h\
+					includes/return_codes.h
 
-TEST_INCLUDES =
+TEST_INCLUDES =		-Iincludes
 
-
+TEST_LIBS = 		-lpthread
 
 $(TARGET): $(TARGET_SRCS) $(TARGET_HEADERS)
 	$(CC) $(CFLAGS) $(TARGET_INCLUDES) $(TARGET_SRCS) -o $(TARGET)
 
 $(TEST): $(TEST_SRCS) $(TEST_HEADERS)
-	$(CC) $(CFLAGS) $(TEST_INCLUDES) $(TEST_SRCS) -o $(TEST)
+	$(CC) $(CFLAGS) $(TEST_INCLUDES) $(TEST_SRCS) -o $(TEST) $(TEST_LIBS)
 
 # %.o: %.c
 # 	$(CC) -g $(CFLAGS) -c $< -o $@
