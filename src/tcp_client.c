@@ -9,6 +9,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <fcntl.h>
 
 struct tcp_client_s
 {
@@ -22,6 +23,7 @@ struct tcp_client_s
 ret_code tcp_client_init(char *ip_str, uint8_t *buff, size_t buff_size)
 {
     int sock = 0;
+    int flags = 0;
     struct sockaddr_in server;
 
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
@@ -35,6 +37,20 @@ ret_code tcp_client_init(char *ip_str, uint8_t *buff, size_t buff_size)
     if (!extract_ip_port(ip_str, &server.sin_addr.s_addr, &server.sin_port))
     {
         log_add("Failed to parse ip:port '%s': %s", ip_str, get_errno_str());
+        return RET_ERROR;
+    }
+
+    flags = fcntl(sock, F_GETFL, 0);
+    if (flags == -1)
+    {
+        log_add("Failed to read socket flags: %s", get_errno_str());
+        return RET_ERROR;
+    }
+
+    flags |= O_NONBLOCK;
+    if (fcntl(sock, F_SETFL, flags) != 0)
+    {
+        log_add("Failed to set socket flags: %s", get_errno_str());
         return RET_ERROR;
     }
 
@@ -101,7 +117,8 @@ ret_code tcp_client_send_buff(size_t len)
 {
     // TODO:    Investigate
     // Issue:   Send returns success for some time after the pipe has been closed from another side
-    if ((size_t)send(tcp_client.sock, tcp_client.buff, len, MSG_NOSIGNAL) == len)
+    //          MSG_DONTWAIT returns EAGAIN if the operation would block, gotta check this too
+    if ((size_t)send(tcp_client.sock, tcp_client.buff, len, MSG_NOSIGNAL | MSG_DONTWAIT) == len)
         return RET_OK;
     return RET_ERROR;
 }
