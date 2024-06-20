@@ -66,11 +66,18 @@ ret_code loop_udp_message_handler(int sock, struct sockaddr_in* from, uint8_t *b
     inet_ntop(AF_INET, &from->sin_addr, ip, sizeof(ip));
     port = htons(from->sin_port);
 
+    
+    if (tcp_client_check_connection() != RET_OK) {
+        log_add("TCP client: connection to the server is down\n");
+        // if (tcp_client_reconnect() != RET_OK) {
+            // log_add("TCP client: discarded message from '%s:%d': %s", ip, port, buff);
+            // return RET_ERROR;
+        // }
+    }
     log_add("Got message from '%s:%d': %s", ip, port, buff);
     if (tcp_client_send_buff(buff_len + PREFIX_SIZE) != RET_OK)
     {
-        log_add("Tcp client returned error: %s", get_errno_str());
-        tcp_client_reconnect();
+        log_add("TCP send returned error: %s", get_errno_str());
         return RET_ERROR;
     }
     return RET_OK;

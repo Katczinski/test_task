@@ -159,7 +159,7 @@ void tcp_server_default_handler(int sock, struct sockaddr_in *from, uint8_t *buf
     printf("TCP server: Got message from '%s:%d': %s\n", ip, port, buff);
 }
 
-void server_tcp_do_accept(int listenFd, int epfd)
+ret_code server_tcp_do_accept(int listenFd, int epfd)
 {
     int cliFd;
     struct sockaddr_in cliaddr;
@@ -169,14 +169,20 @@ void server_tcp_do_accept(int listenFd, int epfd)
     cliFd = accept(listenFd, (struct sockaddr *)&cliaddr, &socklen);
     if (cliFd < 0)
     {
-        perror("accept");
-        return;
+        printf("TCP server: accept failed: %s\n", get_errno_str());
+        return RET_ERROR;
     }
 
     ev.events = EPOLLIN | EPOLLRDHUP;
     ev.data.fd = cliFd;
 
-    epoll_ctl(epfd, EPOLL_CTL_ADD, cliFd, &ev);
+    if (epoll_ctl(epfd, EPOLL_CTL_ADD, cliFd, &ev) < 0)
+    {
+        printf("Failed to add target descriptor to the epoll descriptor: %s", get_errno_str());
+        return RET_ERROR;
+    }
+
+    return RET_OK;
 }
 
 void *tcp_server_loop(void *arg)
