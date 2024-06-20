@@ -11,7 +11,7 @@
 #define ARGS_PREFIX 		4
 #define ARGS_EXPECTED_ARGC	5
 
-#define MAX_EVENT_NUM       20
+#define MAX_EVENT_NUM       1
 
 #define TX_BUFF_SIZE        1024
 #define PREFIX_SIZE         4

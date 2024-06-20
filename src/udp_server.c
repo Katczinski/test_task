@@ -61,7 +61,7 @@ int udp_server_get_default_socket(char *ip_str, int *listen_sock)
     return RET_OK;
 }
 
-ret_code udp_server_init(char *ip_str, uint8_t *buff, size_t buff_size) // TODO: Could take user events but it would complicate events handler. Gotta solve this
+ret_code udp_server_init(char *ip_str)
 {
     int listen_sock = 0;
     int epfd = 0;    
@@ -89,8 +89,6 @@ ret_code udp_server_init(char *ip_str, uint8_t *buff, size_t buff_size) // TODO:
     }
 
     udp_server.epfd = epfd;
-    udp_server.buff = buff;
-    udp_server.buff_size = buff_size;
 
     log_add("UDP server started on %s", ip_str);
     return RET_OK;
@@ -126,27 +124,27 @@ ret_code udp_server_shutdown()
     return RET_OK;
 }
 
-ret_code udp_server_iterate(int timeout)
+ret_code udp_server_iterate(uint8_t *buff, size_t buff_size, int timeout)
 {
     int event_count = epoll_wait(udp_server.epfd, udp_server.events, MAX_EVENT_NUM, timeout);
     ret_code ret = RET_OK;
     for (int i = 0; i < event_count; ++i)
     {
         int client_fd = udp_server.events[i].data.fd;
-        if (client_fd < 0 || !(udp_server.events[i].events & EPOLLIN)) // TODO: don't have other events yet. May be should
+        if (client_fd < 0)
             continue;
         
         struct sockaddr_in clientaddr;
         socklen_t client_len = sizeof(struct sockaddr);
 
-        int len = recvfrom(client_fd, udp_server.buff, udp_server.buff_size, MSG_DONTWAIT, (struct sockaddr *)&clientaddr, &client_len);
+        int len = recvfrom(client_fd, buff, buff_size, MSG_DONTWAIT, (struct sockaddr *)&clientaddr, &client_len);
         if (len > 0)
         {
-            udp_server.buff[len] = '\0';
-            if (udp_server.handler)
-                udp_server.handler(client_fd, &clientaddr, udp_server.buff, len);
-            else
-                udp_server_default_handler(client_fd, &clientaddr, udp_server.buff, len);
+            buff[len] = '\0';
+            // if (udp_server.handler)
+            //     udp_server.handler(client_fd, &clientaddr, buff, len);
+            // else
+            //     udp_server_default_handler(client_fd, &clientaddr, buff, len);
         }
         else if (len < 0)
         {
