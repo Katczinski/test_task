@@ -14,9 +14,9 @@
 #include "return_codes.h"
 
 #if defined(ARGS_UDP_IP) || defined(ARGS_TCP_IP) || defined(ARGS_UDP_IP)
-#undef ARGS_UDP_IP
-#undef ARGS_TCP_IP
-#undef ARGS_EXPECTED_ARGC
+    #undef ARGS_UDP_IP
+    #undef ARGS_TCP_IP
+    #undef ARGS_EXPECTED_ARGC
 #endif
 
 #if defined(UDP) && defined(TCP)
@@ -163,7 +163,6 @@ void tcp_server_default_handler(int sock, struct sockaddr_in *from, uint8_t *buf
     port = htons(from->sin_port);
 
     printf("TCP server: got %lu bytes from '%s:%d': %s\n", buff_len, ip, port, buff);
-    // printf("TCP server: Got message (%lu) from '%s:%d': %s\n", buff_len, ip, port, buff);
 }
 
 ret_code server_tcp_do_accept(int listenFd, int epfd)
@@ -239,6 +238,7 @@ void *tcp_server_loop(void *arg)
                     }
                     else
                     {
+                        close(client_fd);
                         // client closed socket
                     }
                     events &= ~EPOLLIN;
@@ -263,21 +263,30 @@ void *tcp_server_loop(void *arg)
     return NULL;
 }
 
+int get_random_number(int min, int max)
+{
+    return rand() % (max + 1 - min) + min;
+}
+
+char get_random_char()
+{
+    return 'A' + rand() % 26;
+}
+
 void *udp_client_loop(void *arg)
 {
     int delay_us = *(int *)arg;
     printf("UDP client: delay %d us is chosen\n", delay_us);
-    char *msgs[] = {"Hello", "I", "am", "a", "test", "UDP", "Client"};
-    size_t i = 0;
+    char weird_msg[129] = { 0 };
     while (1)
     {
-        char *msg = msgs[i];
-        int bytes = sendto(udp_client.sock, msg, strlen(msg), 0, (struct sockaddr *)&udp_client.server, udp_client.slen);
+        int size = get_random_number(16, 128);
+        memset(weird_msg, get_random_char(), size);
+        weird_msg[size] = '\0';
+        int bytes = sendto(udp_client.sock, weird_msg, size, 0, (struct sockaddr *)&udp_client.server, udp_client.slen);
         if (bytes > 0)
         {
-            printf("UDP client: sent %d bytes: %s\n", bytes, msg);
-            if (++i >= array_size(msgs))
-                i = 0;
+            printf("UDP client: sent %d bytes: %s\n", bytes, weird_msg);
         }
         else
         {
@@ -324,7 +333,7 @@ int main(int argc, char *argv[])
 
     pthread_t threads[2] = { 0 };
 #ifdef UDP
-    int delay_us = 1000;
+    int delay_us = 100;
     init_udp_client(argv[ARGS_UDP_IP]);
     threads[0] = thread_create(udp_client_loop, &delay_us);
 #endif
