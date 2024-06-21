@@ -265,8 +265,8 @@ void *tcp_server_loop(void *arg)
 
 void *udp_client_loop(void *arg)
 {
-    int delay = *(int *)arg;
-    printf("UDP client: delay %d is chosen\n", delay);
+    int delay_us = *(int *)arg;
+    printf("UDP client: delay %d us is chosen\n", delay_us);
     char *msgs[] = {"Hello", "I", "am", "a", "test", "UDP", "Client"};
     size_t i = 0;
     while (1)
@@ -283,7 +283,7 @@ void *udp_client_loop(void *arg)
         {
             printf("UDP client: failed to send a message: %s\n", strerror(errno));
         }
-        usleep(delay);
+        usleep(delay_us);
     }
     return NULL;
 }
@@ -324,9 +324,9 @@ int main(int argc, char *argv[])
 
     pthread_t threads[2] = { 0 };
 #ifdef UDP
-    int delay = 10000;
+    int delay_us = 1000;
     init_udp_client(argv[ARGS_UDP_IP]);
-    threads[0] = thread_create(udp_client_loop, &delay);
+    threads[0] = thread_create(udp_client_loop, &delay_us);
 #endif
 #ifdef TCP
     int timeout = 0;

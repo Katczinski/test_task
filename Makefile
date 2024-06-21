@@ -14,7 +14,8 @@ TARGET_SRCS = 		main.c\
 					src/utils.c\
 					src/loop.c\
 					src/udp_server.c\
-					src/tcp_client.c
+					src/tcp_client.c\
+					src/socket.c
  
 TARGET_OBJS = 		$(TARGET_SRCS:.c=.o)
 
@@ -25,7 +26,8 @@ TARGET_HEADERS =	includes/errors.h\
 					includes/return_codes.h\
 					includes/defines.h\
 					includes/udp_server.h\
-					includes/tcp_client.h
+					includes/tcp_client.h\
+					includes/socket.h
 
 TARGET_INCLUDES = 	-Iincludes
 

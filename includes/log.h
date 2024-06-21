@@ -5,5 +5,6 @@
 
 void        log_add(char *format, ...);
 ret_code    log_init_file(char *path);
+void        log_file_shutdown();
 
 #endif

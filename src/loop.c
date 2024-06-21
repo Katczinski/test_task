@@ -109,7 +109,7 @@ ret_code loop_run()
     while (loop_keep_running) {
         if (tcp_client_check_connection() != RET_OK) {
             sent_bytes = received_bytes = 0;
-            tcp_client_reconnect(true);
+            tcp_client_reconnect();
         } else if (sent_bytes < received_bytes) {
             sent_bytes += tcp_client_send(comm_buff + sent_bytes, received_bytes);
             if (sent_bytes > 0)
@@ -120,18 +120,11 @@ ret_code loop_run()
             if (received_bytes > 0)
                 received_bytes += PREFIX_SIZE;
         }
-        // tcp_client_iterate();
-        // if (received_bytes > 0) {
-        //     sent_bytes = tcp_client_send(comm_buff + sent_bytes, received_bytes);
-        //     if (sent_bytes > 0)
-        //         received_bytes -= sent_bytes;
-        // } else {
-        //     sent_bytes = 0;
-        //     received_bytes = udp_server_recv(comm_buff + PREFIX_SIZE, RX_BUFF_SIZE, 0);
-        // }
     }
 
     udp_server_shutdown();
     tcp_client_shutdown();
+    log_file_shutdown();
+    log_add("Forced exit");
     return RET_ERROR;
 }

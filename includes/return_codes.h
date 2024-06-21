@@ -4,7 +4,6 @@
 typedef enum {
 	RET_OK = 0,
 	RET_ERROR,
-	RET_PENDING,
 } ret_code;
 
 #endif
