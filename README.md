@@ -37,3 +37,5 @@ Any of the test programs:
 - All ip addresses MUST follow the format 'ddd.ddd.ddd.ddd:xxxxx'
 - Prefix MUST be a 4-characters long string
 - OS Linux
+
+![](https://github.com/Katczinski/test_task/blob/busy_wait/example.gif)
