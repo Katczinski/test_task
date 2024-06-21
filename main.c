@@ -31,7 +31,7 @@ ret_code validate_argv(int argc, char *argv[])
 	}
 
 	if (!is_valid_prefix(argv[ARGS_PREFIX])) {
-		log_add("Invalid prefix length (%d): '%s'", strlen(argv[ARGS_PREFIX]), argv[ARGS_PREFIX]);
+		log_add("Invalid prefix length (%d): '%s'. Expected: %d", strlen(argv[ARGS_PREFIX]), argv[ARGS_PREFIX], PREFIX_SIZE);
 		return RET_ERROR;
 	}
 
