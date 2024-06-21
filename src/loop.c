@@ -110,10 +110,14 @@ ret_code loop_run()
         if (tcp_client_check_connection() != RET_OK) {
             sent_bytes = received_bytes = 0;
             tcp_client_reconnect();
-        } else if (sent_bytes < received_bytes) {
+        }
+//      Non-blocking send returns EAGAIN when fails to send an entire buffer in one go, so we gotta send the rest of it before reading again
+        if (sent_bytes < received_bytes) {
             sent_bytes += tcp_client_send(comm_buff + sent_bytes, received_bytes);
             if (sent_bytes > 0)
                 received_bytes -= sent_bytes;
+            else // wasn't able to achieve this
+                sent_bytes = received_bytes = 0;
         } else {
             sent_bytes = 0;
             received_bytes = udp_server_recv(comm_buff + PREFIX_SIZE, RX_BUFF_SIZE, 0);
