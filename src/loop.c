@@ -56,58 +56,52 @@ ret_code loop_init_buffer(char *prefix)
     return RET_OK;
 }
 
-ret_code loop_udp_message_handler(int sock, struct sockaddr_in* from, uint8_t *buff, size_t buff_len)
-{
-    (void)sock;
-
-    char ip[INET_ADDRSTRLEN];
-    uint16_t port;
-
-    inet_ntop(AF_INET, &from->sin_addr, ip, sizeof(ip));
-    port = htons(from->sin_port);
-
-    log_add("Got message from '%s:%d': %s", ip, port, buff);
-    if (tcp_client_send_buff(buff_len + PREFIX_SIZE) != RET_OK)
-    {
-        log_add("Tcp client returned error: %s", get_errno_str());
-        tcp_client_reconnect();
-        return RET_ERROR;
-    }
-    return RET_OK;
-}
-
 ret_code loop_tcp_client_init(char *ip_str)
 {
-    return tcp_client_init(ip_str, comm_buff, TX_BUFF_SIZE);
+    return tcp_client_init(ip_str);
 }
 
 ret_code loop_udp_server_init(char *ip_str)
 {
-    if (udp_server_init(ip_str, comm_buff + PREFIX_SIZE, RX_BUFF_SIZE) != RET_OK)
-        return RET_ERROR;
-
-    if (udp_server_install_handler(&loop_udp_message_handler) != RET_OK)
-        return RET_ERROR;
-
-    return RET_OK;
+    return udp_server_init(ip_str);
 }
 
 void loop_sigint_handler(int sig)
 {
     (void)sig;
-
+    printf("\nSIGINT caught\n");
     loop_keep_running = false;
 }
 
 ret_code loop_run()
 {
     signal(SIGINT, loop_sigint_handler);
+
+    int received_bytes = 0;
+    int sent_bytes = 0;
     while (loop_keep_running) {
-        tcp_client_iterate();
-        udp_server_iterate(0);
+        if (tcp_client_check_connection() != RET_OK) {
+            sent_bytes = received_bytes = 0;
+            tcp_client_reconnect();
+        }
+//      Non-blocking send returns EAGAIN when fails to send an entire buffer in one go, so we gotta send the rest of it before reading again
+        if (sent_bytes < received_bytes) {
+            sent_bytes += tcp_client_send(comm_buff + sent_bytes, received_bytes);
+            if (sent_bytes > 0)
+                received_bytes -= sent_bytes;
+            else // wasn't able to achieve this
+                sent_bytes = received_bytes = 0;
+        } else {
+            sent_bytes = 0;
+            received_bytes = udp_server_recv(comm_buff + PREFIX_SIZE, RX_BUFF_SIZE, 0);
+            if (received_bytes > 0)
+                received_bytes += PREFIX_SIZE;
+        }
     }
 
     udp_server_shutdown();
     tcp_client_shutdown();
+    log_file_shutdown();
+    log_add("Forced exit");
     return RET_ERROR;
 }

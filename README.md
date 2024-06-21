@@ -4,11 +4,11 @@ The program is supposed to listen to all incoming UDP messages, append a specifi
 
 ## Build
 The build targets are following:
-- target      (Default make target) The program itself
-- test_udp    The test program to act as a UDP client to the specified server (main program)
-- test_tcp    The test program to act as a TCP server for the main program to redirect messages
-- all         Builds all of the above  
-- debug       Builds all of the above in the debug mode
+- target          (Default make target) The program itself
+- test_udp      The test program to act as a UDP client to the specified server (main program)
+- test_tcp       The test program to act as a TCP server for the main program to redirect messages to
+- all                Builds all of the above  
+- debug         Builds all of the above in the debug mode
 
 Debug mode is designed to redirect all the program output to stdout instead of the log file, while performing all the validity checks on the input parameters
 
@@ -16,7 +16,9 @@ Debug mode is designed to redirect all the program output to stdout instead of t
 ``` shell
 make all
 ```
-
+``` shell
+make debug
+```
 ## Usage
 The main program requires 4 arguments, which are:
 - UDP ip:port to listen to
@@ -30,8 +32,11 @@ Any of the test programs:
 - ip:port to start UDP client/TCP server on
 ``` shell
 ./test_udp 127.0.0.1:6000
+```
+``` shell
 ./test_tcp 127.0.0.1:7000
 ```
+![](https://github.com/Katczinski/test_task/blob/busy_wait/example.gif)
 
 ## Requirements
 - All ip addresses MUST follow the format 'ddd.ddd.ddd.ddd:xxxxx'

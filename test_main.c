@@ -8,15 +8,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 
 #include "errors.h"
 #include "utils.h"
 #include "return_codes.h"
 
 #if defined(ARGS_UDP_IP) || defined(ARGS_TCP_IP) || defined(ARGS_UDP_IP)
-#undef ARGS_UDP_IP
-#undef ARGS_TCP_IP
-#undef ARGS_EXPECTED_ARGC
+    #undef ARGS_UDP_IP
+    #undef ARGS_TCP_IP
+    #undef ARGS_EXPECTED_ARGC
 #endif
 
 #if defined(UDP) && defined(TCP)
@@ -39,7 +40,7 @@
 #endif
 
 #define array_size(n) (sizeof(n) / sizeof(n[0]))
-#define BUFF_SIZE 1024
+#define BUFF_SIZE 2048
 
 struct udp_client_s
 {
@@ -58,6 +59,25 @@ struct tcp_server_s
     int sock;
 } tcp_server;
 
+static bool test_keep_running = true;
+
+void test_sigint_handler(int sig)
+{
+    (void)sig;
+    printf("\nSIGINT caught\n");
+    test_keep_running = false;
+}
+
+int get_random_number(int min, int max)
+{
+    return rand() % (max + 1 - min) + min;
+}
+
+char get_random_char()
+{
+    return 'A' + rand() % 26;
+}
+
 ret_code init_tcp_server(char *ip_str)
 {
     struct epoll_event ep;
@@ -68,6 +88,12 @@ ret_code init_tcp_server(char *ip_str)
     if ((listen_sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
         printf("TCP server: failed to create socket: %s\n", get_errno_str());
+        return RET_ERROR;
+    }
+
+    const int enable = 1;
+    if (setsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
+        printf("setsockopt(SO_REUSEADDR) failed: %s\n", get_errno_str());
         return RET_ERROR;
     }
 
@@ -148,7 +174,6 @@ pthread_t thread_create(void *(*start_routine)(void *), void *arg)
 void tcp_server_default_handler(int sock, struct sockaddr_in *from, uint8_t *buff, size_t buff_len)
 {
     (void)sock;
-    (void)buff_len;
 
     char ip[INET_ADDRSTRLEN];
     uint16_t port;
@@ -156,10 +181,10 @@ void tcp_server_default_handler(int sock, struct sockaddr_in *from, uint8_t *buf
     inet_ntop(AF_INET, &from->sin_addr, ip, sizeof(ip));
     port = htons(from->sin_port);
 
-    printf("TCP server: Got message from '%s:%d': %s\n", ip, port, buff);
+    printf("TCP server: got %lu bytes from '%s:%d': %s\n", buff_len, ip, port, buff);
 }
 
-void server_tcp_do_accept(int listenFd, int epfd)
+ret_code server_tcp_do_accept(int listenFd, int epfd)
 {
     int cliFd;
     struct sockaddr_in cliaddr;
@@ -169,21 +194,35 @@ void server_tcp_do_accept(int listenFd, int epfd)
     cliFd = accept(listenFd, (struct sockaddr *)&cliaddr, &socklen);
     if (cliFd < 0)
     {
-        perror("accept");
-        return;
+        printf("TCP server: accept failed: %s\n", get_errno_str());
+        return RET_ERROR;
     }
+
+    char ip[INET_ADDRSTRLEN];
+    uint16_t port;
+
+    inet_ntop(AF_INET, &cliaddr.sin_addr, ip, sizeof(ip));
+    port = htons(cliaddr.sin_port);
+
+    printf("accepted new client: %s:%d\n", ip, port);
 
     ev.events = EPOLLIN | EPOLLRDHUP;
     ev.data.fd = cliFd;
 
-    epoll_ctl(epfd, EPOLL_CTL_ADD, cliFd, &ev);
+    if (epoll_ctl(epfd, EPOLL_CTL_ADD, cliFd, &ev) < 0)
+    {
+        printf("Failed to add target descriptor to the epoll descriptor: %s", get_errno_str());
+        return RET_ERROR;
+    }
+
+    return RET_OK;
 }
 
 void *tcp_server_loop(void *arg)
 {
     int timeout = *(int *)arg;
     printf("TCP server: epoll_wait timeout %d is chosen\n", timeout);
-    while (1)
+    while (test_keep_running)
     {
         int event_count = epoll_wait(tcp_server.epfd, tcp_server.events, MAX_EVENT_NUM, timeout);
         for (int i = 0; i < event_count; ++i)
@@ -202,10 +241,11 @@ void *tcp_server_loop(void *arg)
 
                 if (events & EPOLLIN)
                 {
-                    struct sockaddr_in clientaddr;
-                    socklen_t client_len = sizeof(struct sockaddr);
-                    // printf("TCP server: reading from socket. event %d\n", events);
-                    int len = recvfrom(client_fd, tcp_server.buff, tcp_server.buff_size, 0, (struct sockaddr *)&clientaddr, &client_len);
+                    struct sockaddr_in clientaddr = { 0 };
+                    socklen_t client_len = sizeof(clientaddr);
+
+                    int len = recvfrom(client_fd, tcp_server.buff, tcp_server.buff_size, MSG_DONTWAIT, NULL, NULL); // recvfrom ignores 'from' and 'fromlen' for connection-oriented sockets.
+                    getpeername(client_fd, (struct sockaddr *)&clientaddr, &client_len);
                     if (len > 0)
                     {
                         tcp_server.buff[len] = '\0';
@@ -217,6 +257,7 @@ void *tcp_server_loop(void *arg)
                     }
                     else
                     {
+                        close(client_fd);
                         // client closed socket
                     }
                     events &= ~EPOLLIN;
@@ -230,7 +271,7 @@ void *tcp_server_loop(void *arg)
                 if (events != 0) {
                     printf("TCP server: events left unhandled: %d\n", events);
                 }
-                if ((rand()%10) == 0)
+                if (get_random_number(0, 50) == 25)
                 {
                     printf("TCP server: ***random decided to close socket!***\n");
                     close(client_fd);
@@ -238,31 +279,32 @@ void *tcp_server_loop(void *arg)
             }
         }
     }
+    printf("TCP test shutdown\n");
     return NULL;
 }
 
 void *udp_client_loop(void *arg)
 {
-    int delay = *(int *)arg;
-    printf("UDP client: delay %d is chosen\n", delay);
-    char *msgs[] = {"Hello", "I", "am", "a", "test", "UDP", "Client"};
-    size_t i = 0;
-    while (1)
+    int delay_us = *(int *)arg;
+    printf("UDP client: delay %d us is chosen\n", delay_us);
+    char weird_msg[129] = { 0 };
+    while (test_keep_running)
     {
-        char *msg = msgs[i];
-        int bytes = sendto(udp_client.sock, msg, strlen(msg), 0, (struct sockaddr *)&udp_client.server, udp_client.slen);
+        int size = get_random_number(16, 128);
+        memset(weird_msg, get_random_char(), size);
+        weird_msg[size] = '\0';
+        int bytes = sendto(udp_client.sock, weird_msg, size, 0, (struct sockaddr *)&udp_client.server, udp_client.slen);
         if (bytes > 0)
         {
-            printf("UDP client: sent %d bytes: %s\n", bytes, msg);
-            if (++i >= array_size(msgs))
-                i = 0;
+            printf("UDP client: sent %d bytes: %s\n", bytes, weird_msg);
         }
         else
         {
             printf("UDP client: failed to send a message: %s\n", strerror(errno));
         }
-        sleep(delay);
+        usleep(delay_us);
     }
+    printf("UDP test shutdown\n");
     return NULL;
 }
 
@@ -294,6 +336,7 @@ ret_code validate_argv(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
+    signal(SIGINT, test_sigint_handler);
     if (validate_argv(argc, argv) != RET_OK)
     {
         printf("Shutting down\n");
@@ -302,9 +345,9 @@ int main(int argc, char *argv[])
 
     pthread_t threads[2] = { 0 };
 #ifdef UDP
-    int delay = 2;
+    int delay_us = 100;
     init_udp_client(argv[ARGS_UDP_IP]);
-    threads[0] = thread_create(udp_client_loop, &delay);
+    threads[0] = thread_create(udp_client_loop, &delay_us);
 #endif
 #ifdef TCP
     int timeout = 0;
