@@ -36,7 +36,7 @@ Any of the test programs:
 ``` shell
 ./test_tcp 127.0.0.1:7000
 ```
-![](https://github.com/Katczinski/test_task/blob/busy_wait/example.gif)
+![](https://github.com/Katczinski/test_task/blob/master/example.gif)
 
 ## Requirements
 - All ip addresses MUST follow the format 'ddd.ddd.ddd.ddd:xxxxx'
