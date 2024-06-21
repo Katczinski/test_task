@@ -94,10 +94,10 @@ int tcp_client_send(uint8_t *buff, size_t len)
     {
         log_add("TCP client: sent %d bytes: %s", len, get_errno_str());
     }
-    // else
-    // {
-    //     log_add("Send returned %d: (%d) %s", sent, get_errno(), get_errno_str());
-    // }
+    else
+    {
+        log_add("Send returned %d: (%d) %s", sent, get_errno(), get_errno_str());
+    }
 
     return sent;
 }
