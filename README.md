@@ -16,7 +16,9 @@ Debug mode is designed to redirect all the program output to stdout instead of t
 ``` shell
 make all
 ```
-
+``` shell
+make debug
+```
 ## Usage
 The main program requires 4 arguments, which are:
 - UDP ip:port to listen to
@@ -30,9 +32,10 @@ Any of the test programs:
 - ip:port to start UDP client/TCP server on
 ``` shell
 ./test_udp 127.0.0.1:6000
+```
+``` shell
 ./test_tcp 127.0.0.1:7000
 ```
-
 ![](https://github.com/Katczinski/test_task/blob/busy_wait/example.gif)
 
 ## Requirements
