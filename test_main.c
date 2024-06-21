@@ -58,6 +58,16 @@ struct tcp_server_s
     int sock;
 } tcp_server;
 
+int get_random_number(int min, int max)
+{
+    return rand() % (max + 1 - min) + min;
+}
+
+char get_random_char()
+{
+    return 'A' + rand() % 26;
+}
+
 ret_code init_tcp_server(char *ip_str)
 {
     struct epoll_event ep;
@@ -154,7 +164,6 @@ pthread_t thread_create(void *(*start_routine)(void *), void *arg)
 void tcp_server_default_handler(int sock, struct sockaddr_in *from, uint8_t *buff, size_t buff_len)
 {
     (void)sock;
-    (void)buff_len;
 
     char ip[INET_ADDRSTRLEN];
     uint16_t port;
@@ -252,25 +261,15 @@ void *tcp_server_loop(void *arg)
                 if (events != 0) {
                     printf("TCP server: events left unhandled: %d\n", events);
                 }
-                // if ((rand()%10) == 0)
-                // {
-                //     printf("TCP server: ***random decided to close socket!***\n");
-                //     close(client_fd);
-                // }
+                if (get_random_number(0, 50) == 25)
+                {
+                    printf("TCP server: ***random decided to close socket!***\n");
+                    close(client_fd);
+                }
             }
         }
     }
     return NULL;
-}
-
-int get_random_number(int min, int max)
-{
-    return rand() % (max + 1 - min) + min;
-}
-
-char get_random_char()
-{
-    return 'A' + rand() % 26;
 }
 
 void *udp_client_loop(void *arg)
