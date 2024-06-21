@@ -4,11 +4,11 @@ The program is supposed to listen to all incoming UDP messages, append a specifi
 
 ## Build
 The build targets are following:
-- target&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Default make target) The program itself
-- test_udp&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The test program to act as a UDP client to the specified server (main program)
-- test_tcp&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The test program to act as a TCP server for the main program to redirect messages to
-- all&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Builds all of the above  
-- debug&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Builds all of the above in the debug mode
+- target          (Default make target) The program itself
+- test_udp      The test program to act as a UDP client to the specified server (main program)
+- test_tcp       The test program to act as a TCP server for the main program to redirect messages to
+- all                Builds all of the above  
+- debug         Builds all of the above in the debug mode
 
 Debug mode is designed to redirect all the program output to stdout instead of the log file, while performing all the validity checks on the input parameters
 
