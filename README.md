@@ -9,8 +9,11 @@ The build targets are following:
 - test_tcp       The test program to act as a TCP server for the main program to redirect messages to
 - all                Builds all of the above  
 - debug         Builds all of the above in the debug mode
+- release        Builds all in release mode
 
-Debug mode is designed to redirect all the program output to stdout instead of the log file, while performing all the validity checks on the input parameters
+**Debug mode** is designed to redirect all the program output to stdout instead of the log file, while performing all the validity checks on the input parameters.  
+
+**Release mode** reduces log severity, disabling logs for incoming/outcoming messages.
 
 ### Example
 ``` shell
@@ -19,6 +22,9 @@ make all
 ``` shell
 make debug
 ```
+``` shell
+make release
+```
 ## Usage
 The main program requires 4 arguments, which are:
 - UDP ip:port to listen to
@@ -26,7 +32,7 @@ The main program requires 4 arguments, which are:
 - file name of the log to be created if it does not exist
 - prefix to append to all incoming messages
 ``` shell
-./target 127.0.0.1:6000 127.0.0.1:7000 log.txt +-+-
+./target 127.0.0.1:6000 127.0.0.1:7000 log.txt _-_-
 ```
 Any of the test programs:
 - ip:port to start UDP client/TCP server on
