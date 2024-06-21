@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <sys/epoll.h>
+
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -75,7 +76,7 @@ ret_code udp_server_init(char *ip_str)
     }
 
     memset(&ep, 0, sizeof(ep));
-    ep.events = EPOLLIN;            // TODO: explore all the events and may be add some
+    ep.events = EPOLLIN;
     ep.data.fd = listen_sock;
 
     if (epoll_ctl(epfd, EPOLL_CTL_ADD, ep.data.fd, &ep) < 0)

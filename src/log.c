@@ -37,7 +37,6 @@ ret_code log_init_file(char *path)
 	return RET_ERROR;
 }
 
-// TODO: add component 
 void log_add(char *format, ...)
 {
 	va_list arg_list;

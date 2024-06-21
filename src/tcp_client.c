@@ -38,7 +38,6 @@ ret_code tcp_client_init(char *ip_str)
     if (connect(sock, (struct sockaddr *)&server, sizeof(server)) != 0)
     {
         log_add("Failed to connect to '%s': %s\n", ip_str, get_errno_str());
-        // return RET_ERROR;
     }
 
     tcp_client.sock = sock;
@@ -51,6 +50,7 @@ ret_code tcp_client_init(char *ip_str)
 
 ret_code tcp_client_reconnect()
 {
+//  Since this is performed every iteration of the main loop (when connection is down), to avoid clogging up the log it goes silent after the first failed connect
     static bool silent = false;
 
     if (!silent) log_add("Reconnecting to TCP server...");
@@ -59,14 +59,17 @@ ret_code tcp_client_reconnect()
     if ((tcp_client.sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
         if (!silent) log_add("Failed to create socket: %s", get_errno_str());
+        silent = true;
         return RET_ERROR;
     }
+
     if (connect(tcp_client.sock, (struct sockaddr *)&tcp_client.server, sizeof(tcp_client.server)) != 0)
     {
         if (!silent) log_add("Failed to reconnect: %s\n", get_errno_str());
         silent = true;
         return RET_ERROR;
     }
+
     silent = false;
     log_add("Connection established");
     return RET_OK;
@@ -90,7 +93,7 @@ int tcp_client_send(uint8_t *buff, size_t len)
 {
     reset_errno();
     int sent = send(tcp_client.sock, buff, len, MSG_NOSIGNAL | MSG_DONTWAIT);
-    if ((size_t)sent > 0)
+    if (sent > 0)
     {
         log_add("TCP client: sent %d bytes: %s", len, get_errno_str());
     }
