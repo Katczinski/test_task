@@ -4,7 +4,7 @@ The program is supposed to listen to all incoming UDP messages, append a specifi
 
 ## Build
 The build targets are following:
-- target      (Default make target) The program itself
+- target&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Default make target) The program itself
 - test_udp    The test program to act as a UDP client to the specified server (main program)
 - test_tcp    The test program to act as a TCP server for the main program to redirect messages
 - all         Builds all of the above  
@@ -33,9 +33,9 @@ Any of the test programs:
 ./test_tcp 127.0.0.1:7000
 ```
 
+![](https://github.com/Katczinski/test_task/blob/busy_wait/example.gif)
+
 ## Requirements
 - All ip addresses MUST follow the format 'ddd.ddd.ddd.ddd:xxxxx'
 - Prefix MUST be a 4-characters long string
 - OS Linux
-
-![](https://github.com/Katczinski/test_task/blob/busy_wait/example.gif)
