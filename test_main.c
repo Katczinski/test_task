@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 
 #include "errors.h"
 #include "utils.h"
@@ -57,6 +58,15 @@ struct tcp_server_s
     int epfd;
     int sock;
 } tcp_server;
+
+static bool test_keep_running = true;
+
+void test_sigint_handler(int sig)
+{
+    (void)sig;
+    printf("\nSIGINT caught\n");
+    test_keep_running = false;
+}
 
 int get_random_number(int min, int max)
 {
@@ -212,7 +222,7 @@ void *tcp_server_loop(void *arg)
 {
     int timeout = *(int *)arg;
     printf("TCP server: epoll_wait timeout %d is chosen\n", timeout);
-    while (1)
+    while (test_keep_running)
     {
         int event_count = epoll_wait(tcp_server.epfd, tcp_server.events, MAX_EVENT_NUM, timeout);
         for (int i = 0; i < event_count; ++i)
@@ -269,6 +279,7 @@ void *tcp_server_loop(void *arg)
             }
         }
     }
+    printf("TCP test shutdown\n");
     return NULL;
 }
 
@@ -277,7 +288,7 @@ void *udp_client_loop(void *arg)
     int delay_us = *(int *)arg;
     printf("UDP client: delay %d us is chosen\n", delay_us);
     char weird_msg[129] = { 0 };
-    while (1)
+    while (test_keep_running)
     {
         int size = get_random_number(16, 128);
         memset(weird_msg, get_random_char(), size);
@@ -293,6 +304,7 @@ void *udp_client_loop(void *arg)
         }
         usleep(delay_us);
     }
+    printf("UDP test shutdown\n");
     return NULL;
 }
 
@@ -324,6 +336,7 @@ ret_code validate_argv(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
+    signal(SIGINT, test_sigint_handler);
     if (validate_argv(argc, argv) != RET_OK)
     {
         printf("Shutting down\n");
