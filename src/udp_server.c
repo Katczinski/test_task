@@ -12,10 +12,7 @@
 #include <fcntl.h>
 
 static struct udp_server_s {
-    callback_handle_t   handler;
     struct epoll_event  events[MAX_EVENT_NUM];
-    size_t              buff_size;
-    uint8_t*            buff;
     int                 epfd;
 } udp_server;
 
@@ -91,29 +88,6 @@ ret_code udp_server_init(char *ip_str)
     udp_server.epfd = epfd;
 
     log_add("UDP server started on %s", ip_str);
-    return RET_OK;
-}
-
-ret_code udp_server_install_handler(callback_handle_t handler)
-{
-    udp_server.handler = handler;
-
-    return RET_OK;
-}
-
-ret_code udp_server_default_handler(int sock, struct sockaddr_in* from, uint8_t *buff, size_t buff_len)
-{
-    (void)sock;
-    (void)buff_len;
-
-    char ip[INET_ADDRSTRLEN];
-    uint16_t port;
-
-    inet_ntop(AF_INET, &from->sin_addr, ip, sizeof(ip));
-    port = htons(from->sin_port);
-
-    log_add("Unhandled message from '%s:%d': %s", ip, port, buff);
-
     return RET_OK;
 }
                 

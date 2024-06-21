@@ -7,7 +7,6 @@
 #include <stddef.h>
 
 ret_code    udp_server_init(char *ip_str);
-ret_code    udp_server_install_handler(callback_handle_t handler);
 ret_code    udp_server_shutdown();
 int         udp_server_recv(uint8_t *buff, size_t buff_size, int timeout);
 
