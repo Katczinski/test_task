@@ -56,10 +56,10 @@ $(TEST_UDP): $(TEST_SRCS) $(TEST_HEADERS)
 $(TEST_TCP): $(TEST_SRCS) $(TEST_HEADERS)
 	$(CC) $(CFLAGS) -DTCP $(TEST_INCLUDES) $(TEST_SRCS) -o $(TEST_TCP) $(TEST_LIBS)
 
-# %.o: %.c
-# 	$(CC) -g $(CFLAGS) -c $< -o $@
-
 all: $(TARGET) $(TEST_UDP) $(TEST_TCP)
+
+release: CFLAGS += -DSILENT
+release: all
 
 # debug: CFLAGS += -fsanitize=address # causes valgrind error: "error calling PR_SET_PTRACER, vgdb might block"
 debug: CFLAGS += -g -DDEBUG

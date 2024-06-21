@@ -102,6 +102,6 @@ ret_code loop_run()
     udp_server_shutdown();
     tcp_client_shutdown();
     log_file_shutdown();
-    log_add("Forced exit");
+    printf("\nForced exit\n");
     return RET_ERROR;
 }

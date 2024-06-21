@@ -271,7 +271,7 @@ void *tcp_server_loop(void *arg)
                 if (events != 0) {
                     printf("TCP server: events left unhandled: %d\n", events);
                 }
-                if (get_random_number(0, 50) == 25)
+                if (get_random_number(0, 2000) == 1337)
                 {
                     printf("TCP server: ***random decided to close socket!***\n");
                     close(client_fd);

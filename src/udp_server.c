@@ -114,14 +114,16 @@ int udp_server_recv(uint8_t *buff, size_t buff_size, int timeout)
         // TODO: EAGAIN??
         if (len > 0)
         {
+            buff[len] = '\0';
+#ifndef SILENT
             char ip[INET_ADDRSTRLEN];
             uint16_t port;
 
             inet_ntop(AF_INET, &clientaddr.sin_addr, ip, sizeof(ip));
-            port = htons(clientaddr.sin_port);
+            port = htons(clientaddr.sin_port);  
 
-            buff[len] = '\0';
             log_add("UDP server: got message from '%s:%d': %s", ip, port, buff);
+#endif
         }
         else if (len < 0)
         {
