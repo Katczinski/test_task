@@ -39,7 +39,7 @@
 #endif
 
 #define array_size(n) (sizeof(n) / sizeof(n[0]))
-#define BUFF_SIZE 1024
+#define BUFF_SIZE 2048
 
 struct udp_client_s
 {
@@ -68,6 +68,12 @@ ret_code init_tcp_server(char *ip_str)
     if ((listen_sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
         printf("TCP server: failed to create socket: %s\n", get_errno_str());
+        return RET_ERROR;
+    }
+
+    const int enable = 1;
+    if (setsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
+        printf("setsockopt(SO_REUSEADDR) failed: %s\n", get_errno_str());
         return RET_ERROR;
     }
 
@@ -267,7 +273,7 @@ void *udp_client_loop(void *arg)
         {
             printf("UDP client: failed to send a message: %s\n", strerror(errno));
         }
-        sleep(delay);
+        usleep(delay);
     }
     return NULL;
 }
@@ -308,7 +314,7 @@ int main(int argc, char *argv[])
 
     pthread_t threads[2] = { 0 };
 #ifdef UDP
-    int delay = 2;
+    int delay = 10000;
     init_udp_client(argv[ARGS_UDP_IP]);
     threads[0] = thread_create(udp_client_loop, &delay);
 #endif

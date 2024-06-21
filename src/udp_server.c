@@ -124,33 +124,34 @@ ret_code udp_server_shutdown()
     return RET_OK;
 }
 
-ret_code udp_server_iterate(uint8_t *buff, size_t buff_size, int timeout)
+int udp_server_recv(uint8_t *buff, size_t buff_size, int timeout)
 {
-    int event_count = epoll_wait(udp_server.epfd, udp_server.events, MAX_EVENT_NUM, timeout);
-    ret_code ret = RET_OK;
-    for (int i = 0; i < event_count; ++i)
-    {
-        int client_fd = udp_server.events[i].data.fd;
+    int len = 0;
+    if (epoll_wait(udp_server.epfd, udp_server.events, 1, timeout) > 0) {
+        int client_fd = udp_server.events[0].data.fd;
         if (client_fd < 0)
-            continue;
+            return len;
         
         struct sockaddr_in clientaddr;
         socklen_t client_len = sizeof(struct sockaddr);
 
-        int len = recvfrom(client_fd, buff, buff_size, MSG_DONTWAIT, (struct sockaddr *)&clientaddr, &client_len);
+        len = recvfrom(client_fd, buff, buff_size, MSG_DONTWAIT, (struct sockaddr *)&clientaddr, &client_len);
+        // TODO: EAGAIN??
         if (len > 0)
         {
+            char ip[INET_ADDRSTRLEN];
+            uint16_t port;
+
+            inet_ntop(AF_INET, &clientaddr.sin_addr, ip, sizeof(ip));
+            port = htons(clientaddr.sin_port);
+
             buff[len] = '\0';
-            // if (udp_server.handler)
-            //     udp_server.handler(client_fd, &clientaddr, buff, len);
-            // else
-            //     udp_server_default_handler(client_fd, &clientaddr, buff, len);
+            log_add("UDP server: got message from '%s:%d': %s", ip, port, buff);
         }
         else if (len < 0)
         {
             log_add("Erorr occured during reading from udp client: %s", get_errno_str());
-            ret = RET_ERROR;
         }
     }
-    return ret;
+    return len;
 }

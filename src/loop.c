@@ -56,33 +56,26 @@ ret_code loop_init_buffer(char *prefix)
     return RET_OK;
 }
 
-ret_code loop_udp_message_handler(int sock, struct sockaddr_in* from, uint8_t *buff, size_t buff_len)
-{
-    (void)sock;
-    (void) buff_len;
+// ret_code loop_udp_message_handler(int sock, struct sockaddr_in* from, uint8_t *buff, size_t buff_len)
+// {
+//     (void)sock;
+//     (void) buff_len;
 
-    char ip[INET_ADDRSTRLEN];
-    uint16_t port;
+//     char ip[INET_ADDRSTRLEN];
+//     uint16_t port;
 
-    inet_ntop(AF_INET, &from->sin_addr, ip, sizeof(ip));
-    port = htons(from->sin_port);
+//     inet_ntop(AF_INET, &from->sin_addr, ip, sizeof(ip));
+//     port = htons(from->sin_port);
 
     
-    if (tcp_client_check_connection() != RET_OK) {
-        log_add("TCP client: connection to the server is down\n");
-        // if (tcp_client_reconnect() != RET_OK) {
-            // log_add("TCP client: discarded message from '%s:%d': %s", ip, port, buff);
-            // return RET_ERROR;
-        // }
-    }
-    log_add("Got message from '%s:%d': %s", ip, port, buff);
-    if (tcp_client_send(comm_buff, TX_BUFF_SIZE) != RET_OK)
-    {
-        log_add("TCP send returned error: %s", get_errno_str());
-        return RET_ERROR;
-    }
-    return RET_OK;
-}
+//     log_add("Got message from '%s:%d': %s", ip, port, buff);
+//     if (tcp_client_send(comm_buff, TX_BUFF_SIZE) != RET_OK)
+//     {
+//         log_add("TCP send returned error: %s", get_errno_str());
+//         return RET_ERROR;
+//     }
+//     return RET_OK;
+// }
 
 ret_code loop_tcp_client_init(char *ip_str)
 {
@@ -110,10 +103,32 @@ void loop_sigint_handler(int sig)
 ret_code loop_run()
 {
     signal(SIGINT, loop_sigint_handler);
+
+    int received_bytes = 0;
+    int sent_bytes = 0;
     while (loop_keep_running) {
-        tcp_client_iterate(comm_buff, TX_BUFF_SIZE);
-        udp_server_iterate(comm_buff + PREFIX_SIZE, RX_BUFF_SIZE, 0);
-        sleep(2);
+        if (tcp_client_check_connection() != RET_OK) {
+            sent_bytes = received_bytes = 0;
+            tcp_client_reconnect(true);
+        } else if (sent_bytes < received_bytes) {
+            sent_bytes += tcp_client_send(comm_buff + sent_bytes, received_bytes);
+            if (sent_bytes > 0)
+                received_bytes -= sent_bytes;
+        } else {
+            sent_bytes = 0;
+            received_bytes = udp_server_recv(comm_buff + PREFIX_SIZE, RX_BUFF_SIZE, 0);
+            if (received_bytes > 0)
+                received_bytes += PREFIX_SIZE;
+        }
+        // tcp_client_iterate();
+        // if (received_bytes > 0) {
+        //     sent_bytes = tcp_client_send(comm_buff + sent_bytes, received_bytes);
+        //     if (sent_bytes > 0)
+        //         received_bytes -= sent_bytes;
+        // } else {
+        //     sent_bytes = 0;
+        //     received_bytes = udp_server_recv(comm_buff + PREFIX_SIZE, RX_BUFF_SIZE, 0);
+        // }
     }
 
     udp_server_shutdown();
