@@ -83,7 +83,13 @@ ret_code tcp_client_init(char *ip_str)
     tcp_client.connected = connected;
     tcp_client.status = status;
 
-    log_add("TCP client inited on %s", ip_str);
+    char ip[INET_ADDRSTRLEN];
+    uint16_t port;
+
+    inet_ntop(AF_INET, &tcp_client.server.sin_addr, ip, sizeof(ip));
+    port = htons(tcp_client.server.sin_port);
+
+    log_add("TCP client inited on %s:%d", ip, port);
 
     return RET_OK;
 }

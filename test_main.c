@@ -162,7 +162,8 @@ void tcp_server_default_handler(int sock, struct sockaddr_in *from, uint8_t *buf
     inet_ntop(AF_INET, &from->sin_addr, ip, sizeof(ip));
     port = htons(from->sin_port);
 
-    printf("TCP server: Got message from '%s:%d': %s\n", ip, port, buff);
+    printf("TCP server: got %lu bytes from '%s:%d': %s\n", buff_len, ip, port, buff);
+    // printf("TCP server: Got message (%lu) from '%s:%d': %s\n", buff_len, ip, port, buff);
 }
 
 ret_code server_tcp_do_accept(int listenFd, int epfd)
@@ -178,6 +179,14 @@ ret_code server_tcp_do_accept(int listenFd, int epfd)
         printf("TCP server: accept failed: %s\n", get_errno_str());
         return RET_ERROR;
     }
+
+    char ip[INET_ADDRSTRLEN];
+    uint16_t port;
+
+    inet_ntop(AF_INET, &cliaddr.sin_addr, ip, sizeof(ip));
+    port = htons(cliaddr.sin_port);
+
+    printf("accepted new client: %s:%d\n", ip, port);
 
     ev.events = EPOLLIN | EPOLLRDHUP;
     ev.data.fd = cliFd;
@@ -214,10 +223,11 @@ void *tcp_server_loop(void *arg)
 
                 if (events & EPOLLIN)
                 {
-                    struct sockaddr_in clientaddr;
-                    socklen_t client_len = sizeof(struct sockaddr);
-                    // printf("TCP server: reading from socket. event %d\n", events);
-                    int len = recvfrom(client_fd, tcp_server.buff, tcp_server.buff_size, 0, (struct sockaddr *)&clientaddr, &client_len);
+                    struct sockaddr_in clientaddr = { 0 };
+                    socklen_t client_len = sizeof(clientaddr);
+
+                    int len = recvfrom(client_fd, tcp_server.buff, tcp_server.buff_size, MSG_DONTWAIT, NULL, NULL); // recvfrom ignores 'from' and 'fromlen' for connection-oriented sockets.
+                    getpeername(client_fd, (struct sockaddr *)&clientaddr, &client_len);
                     if (len > 0)
                     {
                         tcp_server.buff[len] = '\0';
@@ -242,11 +252,11 @@ void *tcp_server_loop(void *arg)
                 if (events != 0) {
                     printf("TCP server: events left unhandled: %d\n", events);
                 }
-                if ((rand()%10) == 0)
-                {
-                    printf("TCP server: ***random decided to close socket!***\n");
-                    close(client_fd);
-                }
+                // if ((rand()%10) == 0)
+                // {
+                //     printf("TCP server: ***random decided to close socket!***\n");
+                //     close(client_fd);
+                // }
             }
         }
     }
