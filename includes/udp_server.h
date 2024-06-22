@@ -8,6 +8,6 @@
 
 ret_code    udp_server_init(char *ip_str);
 ret_code    udp_server_shutdown();
-int         udp_server_recv(uint8_t *buff, size_t buff_size, int timeout);
+int         udp_server_recv(uint8_t *buff, size_t buff_size, int timeout_ms);
 
 #endif

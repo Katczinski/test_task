@@ -73,29 +73,51 @@ void loop_sigint_handler(int sig)
     loop_keep_running = false;
 }
 
+void loop_discard_message(uint8_t *buff, size_t len)
+{
+#ifndef SILENT
+    log_add("TCP client: not connected. Message (%d) discarded: %s", len, buff);
+#else
+    (void)buff;
+    (void)len;
+#endif
+}
+
 ret_code loop_run()
 {
     signal(SIGINT, loop_sigint_handler);
 
     int received_bytes = 0;
     int sent_bytes = 0;
+    int bytes_to_send = 0;
     while (loop_keep_running) {
-        if (tcp_client_check_connection() != RET_OK) {
-            sent_bytes = received_bytes = 0;
-            tcp_client_reconnect();
-        }
-//      Non-blocking send returns EAGAIN when fails to send an entire buffer in one go, so we gotta send the rest of it before reading again
-        if (sent_bytes < received_bytes) {
-            sent_bytes += tcp_client_send(comm_buff + sent_bytes, received_bytes);
-            if (sent_bytes > 0)
-                received_bytes -= sent_bytes;
-            else // wasn't able to achieve this
-                sent_bytes = received_bytes = 0;
-        } else {
-            sent_bytes = 0;
-            received_bytes = udp_server_recv(comm_buff + PREFIX_SIZE, RX_BUFF_SIZE, 0);
+        if (sent_bytes >= received_bytes)
+        {
+            bytes_to_send = sent_bytes = 0;
+            received_bytes = udp_server_recv(comm_buff + PREFIX_SIZE, RX_BUFF_SIZE, 5000);
             if (received_bytes > 0)
-                received_bytes += PREFIX_SIZE;
+                bytes_to_send = received_bytes + PREFIX_SIZE;
+            else {
+                received_bytes = 0;
+                continue;
+            }
+        }
+        if (tcp_client_check_connection() != RET_OK)
+        {
+            if (tcp_client_reconnect() != RET_OK)
+            {
+                loop_discard_message(comm_buff + sent_bytes, bytes_to_send);
+                bytes_to_send = sent_bytes = received_bytes = 0;
+                continue;
+            }
+        }
+        if (sent_bytes < bytes_to_send)
+        {
+            sent_bytes += tcp_client_send(comm_buff + sent_bytes, bytes_to_send);
+            if (sent_bytes > 0)
+                bytes_to_send -= sent_bytes;
+            else
+                bytes_to_send = sent_bytes = received_bytes = 0;
         }
     }
 

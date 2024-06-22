@@ -99,10 +99,10 @@ ret_code udp_server_shutdown()
     return RET_OK;
 }
 
-int udp_server_recv(uint8_t *buff, size_t buff_size, int timeout)
+int udp_server_recv(uint8_t *buff, size_t buff_size, int timeout_ms)
 {
     int len = 0;
-    if (epoll_wait(udp_server.epfd, udp_server.events, 1, timeout) > 0) {
+    if (epoll_wait(udp_server.epfd, udp_server.events, 1, timeout_ms) > 0) {
         int client_fd = udp_server.events[0].data.fd;
         if (client_fd < 0)
             return len;
