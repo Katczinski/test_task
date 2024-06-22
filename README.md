@@ -1,6 +1,9 @@
 ## About
 This is my take on the interview test task.
-The program is supposed to listen to all incoming UDP messages, append a specified prefix to each of them and redirect the result to the specified TCP server while maintaining constant connection (when possible) to the said server, reconnecting if needed, and logging all the events it deems important to the specified log file. Program should not block at any time.
+The program is supposed to listen to all incoming UDP messages, append a specified prefix to each of them and redirect the result to the specified TCP server while maintaining constant connection (when possible) to the said server, reconnecting if needed, and logging all the events it deems important to the specified log file. Program should not block at any time.  
+
+### git branch busy_wait
+This branch never blocks on waiting for any operation to complete.
 
 ## Build
 The build targets are following:
