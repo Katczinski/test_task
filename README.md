@@ -4,6 +4,8 @@ The program is supposed to listen to all incoming UDP messages, append a specifi
 
 ### git branch busy_wait
 This branch never blocks on waiting for any operation to complete.
+### git branch blocking_wait
+This branch is using blocking epoll_wait to ease up on the CPU usage when no events are happening.
 
 ## Build
 The build targets are following:
