@@ -1,7 +1,8 @@
 ## About
 This is my take on the interview test task.
-The program is supposed to listen to all incoming UDP messages, append a specified prefix to each of them and redirect the result to the specified TCP server while maintaining constant connection (when possible) to the said server, reconnecting if needed, and logging all the events it deems important to the specified log file.  
-**git branch blocking_op**  
+The program is supposed to listen to all incoming UDP messages, append a specified prefix to each of them and redirect the result to the specified TCP server while maintaining constant connection (when possible) to the said server, reconnecting if needed, and logging all the events it deems important to the specified log file.    
+
+### git branch blocking_wait
 This branch is using blocking epoll_wait to ease up on the CPU usage when no events are happening.
 
 ## Build
