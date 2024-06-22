@@ -91,10 +91,17 @@ ret_code tcp_client_check_connection()
     return (closed || !connected) ? RET_ERROR : RET_OK;
 }
 
+void tcp_client_flush_recv()
+{
+    flush_recv_buff(tcp_client.sock);
+}
+
 int tcp_client_send(uint8_t *buff, size_t len)
 {
+    int sent = 0;
+
     reset_errno();
-    int sent = send(tcp_client.sock, buff, len, MSG_NOSIGNAL | MSG_DONTWAIT);
+    sent = send(tcp_client.sock, buff, len, MSG_NOSIGNAL | MSG_DONTWAIT);
 #ifndef SILENT
     if (sent > 0)
     {

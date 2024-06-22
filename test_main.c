@@ -173,8 +173,8 @@ pthread_t thread_create(void *(*start_routine)(void *), void *arg)
 
 void tcp_server_default_handler(int sock, struct sockaddr_in *from, uint8_t *buff, size_t buff_len)
 {
-    (void)sock;
-
+    static uint8_t send_buf[] = "Hey you're supposed to ignore this";
+    int ret = 0;
     char ip[INET_ADDRSTRLEN];
     uint16_t port;
 
@@ -182,6 +182,11 @@ void tcp_server_default_handler(int sock, struct sockaddr_in *from, uint8_t *buf
     port = htons(from->sin_port);
 
     printf("TCP server: got %lu bytes from '%s:%d': %s\n", buff_len, ip, port, buff);
+
+    if ((ret = send(sock, send_buf, array_size(send_buf), MSG_NOSIGNAL | MSG_DONTWAIT)) > 0)
+        printf("Sent back: %s\n", send_buf);
+    else
+        printf("Send returned: %d: %s\n", ret, get_errno_str());
 }
 
 ret_code server_tcp_do_accept(int listenFd, int epfd)

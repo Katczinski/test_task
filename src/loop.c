@@ -118,6 +118,7 @@ ret_code loop_run()
                 bytes_to_send -= sent_bytes;
             else
                 bytes_to_send = sent_bytes = received_bytes = 0;
+            tcp_client_flush_recv();
         }
     }
 
