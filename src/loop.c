@@ -98,6 +98,8 @@ ret_code loop_run()
             received_bytes = udp_server_recv(comm_buff + PREFIX_SIZE, RX_BUFF_SIZE, 0);
             if (received_bytes > 0)
                 bytes_to_send = received_bytes + PREFIX_SIZE;
+            else
+                received_bytes = 0;
         }
         tcp_client_flush_recv();
     }
