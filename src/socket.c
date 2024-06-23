@@ -7,6 +7,7 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <stdio.h>
 
 bool is_closed(int sock)
 {
@@ -52,7 +53,7 @@ void flush_recv_buff(int sock)
     static uint8_t  drain_buff[256] = { 0 };
     do {
         ioctl(sock, FIONREAD, &n);
-        if (n)
+        if (n > 0)
             recv(sock, drain_buff, 256, MSG_DONTWAIT);
     } while (n);
 }

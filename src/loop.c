@@ -73,16 +73,6 @@ void loop_sigint_handler(int sig)
     loop_keep_running = false;
 }
 
-void loop_discard_message(uint8_t *buff, size_t len)
-{
-#ifndef SILENT
-    log_add("TCP client: not connected. Message (%d) discarded: %s", len, buff);
-#else
-    (void)buff;
-    (void)len;
-#endif
-}
-
 ret_code loop_run()
 {
     signal(SIGINT, loop_sigint_handler);
@@ -99,17 +89,12 @@ ret_code loop_run()
                 bytes_to_send = received_bytes + PREFIX_SIZE;
             else {
                 received_bytes = 0;
-                continue;
             }
         }
         if (tcp_client_check_connection() != RET_OK)
         {
-            if (tcp_client_reconnect() != RET_OK)
-            {
-                loop_discard_message(comm_buff + sent_bytes, bytes_to_send);
+            if (tcp_client_reconnect() != RET_OK || sent_bytes > 0) // if something was sent before the loss of connection -> discard this message even if successfully reconnected
                 bytes_to_send = sent_bytes = received_bytes = 0;
-                continue;
-            }
         }
         if (bytes_to_send > 0)
         { 
@@ -119,8 +104,8 @@ ret_code loop_run()
                 sent_bytes += ret;
             } else
                 bytes_to_send = sent_bytes = received_bytes = 0;
-            tcp_client_flush_recv();
         }
+        tcp_client_flush_recv();
     }
 
     udp_server_shutdown();

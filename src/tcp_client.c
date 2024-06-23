@@ -86,6 +86,7 @@ ret_code tcp_client_shutdown()
 
 ret_code tcp_client_check_connection()
 {
+//  For is_closed() to be accurate, socket rx buffer needs to be flushed
     bool closed = is_closed(tcp_client.sock);
     bool connected = is_connected(tcp_client.sock);
     return (closed || !connected) ? RET_ERROR : RET_OK;
