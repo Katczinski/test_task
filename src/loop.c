@@ -86,11 +86,12 @@ ret_code loop_run()
             tcp_client_reconnect();
         }
 //      Non-blocking send returns EAGAIN when fails to send an entire buffer in one go, so we gotta send the rest of it before reading again
-        if (sent_bytes < bytes_to_send) {
-            sent_bytes += tcp_client_send(comm_buff + sent_bytes, bytes_to_send);
-            if (sent_bytes > 0)
-                bytes_to_send -= sent_bytes;
-            else
+        if (bytes_to_send > 0) {
+            int ret = tcp_client_send(comm_buff + sent_bytes, bytes_to_send);
+            if (ret > 0) {
+                bytes_to_send -= ret;
+                sent_bytes += ret;
+            } else
                 bytes_to_send = sent_bytes = received_bytes = 0;
         } else {
             bytes_to_send = sent_bytes = 0;
