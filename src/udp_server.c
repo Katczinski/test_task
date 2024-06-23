@@ -120,9 +120,9 @@ int udp_server_recv(uint8_t *buff, size_t buff_size, int timeout)
             uint16_t port;
 
             inet_ntop(AF_INET, &clientaddr.sin_addr, ip, sizeof(ip));
-            port = htons(clientaddr.sin_port);  
+            port = htons(clientaddr.sin_port);
 
-            log_add("UDP server: got message from '%s:%d': %s", ip, port, buff);
+            log_add("UDP server: got %d bytes from '%s:%d': %s", len, ip, port, buff);
 #endif
         }
         else if (len < 0)
